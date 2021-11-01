@@ -23,46 +23,47 @@ class MCTS(object):
         """
         This function selects the best path starting from the root
         """
-        return self.select_helper(self.root)
+        return self.select_helper()
 
-    def select_helper(self, start_state):
+    def select_helper(self):
         """
         helper function for select. this function selects the optimal path
         """
         #max state
         max_val = -1000
         
-        if start_state.children:
-            for child in start_state.children:
+        if self.root.children:
+            for child in self.root.children:
                 val = child.Q + child.U
 
                 if val > max_val:
                     max_node = child
             return max_node
         else:
-            return self.expand(start_state)
+            return self.expand()
 
-    def expand(self, start_state):
+    def expand(self):
         """
         if a leaf node is reached expand to find a new node
         """
         #avail moves
-        avail_moves = np.where(np.array(start_state.state) == 0)
+        avail_moves = np.where(np.array(self.root.state) == 0)
         new_move = np.random.choice(avail_moves[0])
         
         #create new state
-        new_state = start_state.state
+        new_state = self.root.state
         new_state[new_move] = 1
+        print(self.root.state)
 
         #create new node for the new expanded state
         expanded_state = Node(new_state)
-        expanded_state.parent = start_state
+        expanded_state.parent = self.root
 
         #assign the new state to start states children
-        start_state.children.append(expanded_state)
+        self.root.children.append(expanded_state)
         
-        print(start_state.state)
-        print(expanded_state.children)
+        # print(start_state.state)
+        # print(expanded_state.state)
 
 #start state
 start = [1, 0, 0, 0, 0, 0, 0, 0, 0]
