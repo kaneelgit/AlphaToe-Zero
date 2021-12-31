@@ -11,7 +11,9 @@ Date: December 23rd, 2021
 import numpy as np
 from collections import defaultdict
 import math
-import copy 
+import copy
+
+from numpy.core.numeric import Inf 
 
 #create node class
 class Node(object):
@@ -30,6 +32,7 @@ class Node(object):
 class MCTS:
 
     def __init__(self, node, player):
+        self.root_node = node
         self.current_node = node
         self.player = player
         self._player_ = copy.deepcopy(player) #keep a copy of player
@@ -38,15 +41,15 @@ class MCTS:
         """
         This function is performing the expansion of the MCTS
         """
-        rand_move = self.choose_rand_move(self.current_node.state) #select random move
-        new_state = copy.deepcopy(self.current_node.state) #create the new state
+        rand_move = self.choose_rand_move(self.root_node.state) #select random move
+        new_state = copy.deepcopy(self.root_node.state) #create the new state
         new_state[rand_move] = self.player #create new state
         self.change_player() #change player after the move
                 
         #create the child node and append it to parent
         self.child_node = Node(new_state)
-        self.child_node.parent = self.current_node #set child nodes parent to current node
-        self.current_node.children.append(self.child_node) #append child node to current_nodes children
+        self.child_node.parent = self.root_node #set child nodes parent to current node
+        self.root_node.children.append(self.child_node) #append child node to current_nodes children
 
     def simulate(self):
         """
@@ -72,20 +75,23 @@ class MCTS:
         """
         this function backpropagate and update the values
         """
-        #final state
-        _state_  = copy.deepcopy(self.child_node)
+        global _state_
 
-        while _state_ != self.current_node:
-            print(f'1-{_state_.state}')
+        #final state
+        _state_  = self.child_node
+
+        while _state_ != self.root_node:
+            
+            #if the player won
             if self._terminal_ == self._player_: #if winner is the current player
                 _state_.N += 1
                 _state_.Q += 1
             else:
                 _state_.N += 1
 
-            _state_ == copy.deepcopy(_state_.parent)
-            print(f'2-{_state_.state}')
-            break
+            #change the state to parent
+            _state_ = _state_.parent
+    
     def is_terminal(self, state):
         """
         check if state is a terminal state
@@ -124,13 +130,38 @@ class MCTS:
             self.backprop()
 
         else: #if current node has children continue to traverse
-            
-            # #select random child for now. this should be selected based on uct
-            # child = np.random.choice(self.current_node.children)
-            # #change the current node to child
-            # self.current_node = child
-            # return self.traverse() #traverse again
+            print('looking for children')
+
+            #copy child node, select max uct node
+            _state_ = self.current_node
+            _state_ = self.max_uct(_state_.children)
+            print(_state_.state)
+            self.current_node = _state_
+            self.child_node = _state_             
+
+            return self.traverse()
+    
+    def max_uct(self, children):
+        """
+        find the node with max uct value given node
+        """
+        #max uct val
+        max_uct_val = -Inf
+        max_uct_node = None
+
+        for child in children:
+
             pass
+
+        #for now just use random child
+        return np.random.choice(children)
+
+    def uct(self, node):
+        """
+        calculate the uct value fot this node
+        """
+        return None
+
 
     def change_player(self):
         """
@@ -167,10 +198,29 @@ class MCTS:
         print('',state[6],' |',state[7],' |',state[8])
         print('    |    |  ')
 
+
+#testing MCTS
 #example state
 state = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 # state = [1, 1, 1, 0, 0, 0, 0, 0, 0]
 root_node = Node(state) 
+
+#create two child states
+child_state1 = [0, 0, 0, 0, 0, 0, 0, 0, 1]
+child_state2 = [0, 0, 0, 0, 0, 0, 0, 1, 0]
+child_state3 = [0, 1, 0, 0, 0, 0, 0, 0, 0]
+
+cn1 = Node(child_state1)
+cn2 = Node(child_state2)
+cn3 = Node(child_state3)
+
+child_state4 = [0, 1, 2, 0, 0, 0, 0, 0, 0]
+
+cn3.children.append(child_state4)
+
+root_node.children.append(cn1)
+root_node.children.append(cn2)
+root_node.children.append(cn3)
 
 mcts = MCTS(root_node, 1)
 mcts.traverse()
