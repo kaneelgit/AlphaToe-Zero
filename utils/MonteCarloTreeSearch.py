@@ -15,9 +15,11 @@ import copy
 
 from numpy.core.numeric import Inf 
 
-#create node class
+#create node class. each node stores information about its state, parent, children etc.
 class Node(object):
-
+    """
+    creates a node given the state of the tic tac toe board
+    """
     def __init__(self, state):        
         self.state = state
         self.parent = None
@@ -32,24 +34,28 @@ class Node(object):
 class MCTS:
 
     def __init__(self, node, player):
+        """
+        takes inputs root node and current player (1 or 2)
+        """
         self.root_node = node
         self.current_node = node
         self.player = player
-        self._player_ = copy.deepcopy(player) #keep a copy of player
+        self._player_ = copy.deepcopy(player) #keep a copy of original player
 
     def expand(self):
         """
-        This function is performing the expansion of the MCTS
+        This function is performing the expansion of the MCTS. If the terminal 
         """
-        rand_move = self.choose_rand_move(self.root_node.state) #select random move
-        new_state = copy.deepcopy(self.root_node.state) #create the new state
+        rand_move = self.choose_rand_move(self.current_node.state) #select random move
+        new_state = copy.deepcopy(self.current_node.state) #create the new state
+        self.change_player() #change player before the move
         new_state[rand_move] = self.player #create new state
-        self.change_player() #change player after the move
+        
                 
-        #create the child node and append it to parent
+        #create the child node and append it to the parent
         self.child_node = Node(new_state)
-        self.child_node.parent = self.root_node #set child nodes parent to current node
-        self.root_node.children.append(self.child_node) #append child node to current_nodes children
+        self.child_node.parent = self.current_node #set child nodes parent to current node
+        self.current_node.children.append(self.child_node) #append child node to current_nodes children
 
     def simulate(self):
         """
@@ -60,9 +66,9 @@ class MCTS:
         
         while True:
             rand_move = self.choose_rand_move(state) #create a new move
-            state[rand_move] = self.player #move
-            self.change_player() #change player
-
+            self.change_player() #change player before move
+            state[rand_move] = self.player #move            
+            
             #find if terminal
             self._terminal_ = self.is_terminal(state)
 
@@ -75,11 +81,10 @@ class MCTS:
         """
         this function backpropagate and update the values
         """
-        global _state_
-
         #final state
-        _state_  = self.child_node
-
+        _state_  = copy.deepcopy(self.child_node)
+        print('root node')
+        print(self.child_node.state)
         while _state_ != self.root_node:
             
             #if the player won
@@ -114,7 +119,8 @@ class MCTS:
         This function traverse until a leaf node is met
         """
         if self.is_terminal(self.current_node.state) == 1: #if current node is terminal 
-            print('terminal')
+            print('terminal') #not correct yet
+            pass
             
 
         elif not self.current_node.children: #if current node has no children means leaf node
@@ -127,19 +133,15 @@ class MCTS:
             self.simulate()
 
             #backpropagate
-            self.backprop()
+            #self.backprop()     
 
         else: #if current node has children continue to traverse
+            
             print('looking for children')
-
-            #copy child node, select max uct node
-            _state_ = self.current_node
-            _state_ = self.max_uct(_state_.children)
-            print(_state_.state)
-            self.current_node = _state_
-            self.child_node = _state_             
-
-            return self.traverse()
+            self.current_node = self.max_uct(self.current_node.children)        
+            self.change_player() #change player after selecting a child node
+            
+            return self.traverse() 
     
     def max_uct(self, children):
         """
@@ -215,14 +217,15 @@ cn2 = Node(child_state2)
 cn3 = Node(child_state3)
 
 child_state4 = [0, 1, 2, 0, 0, 0, 0, 0, 0]
+cn4 = Node(child_state4)
 
-cn3.children.append(child_state4)
+cn3.children.append(cn4)
 
 root_node.children.append(cn1)
 root_node.children.append(cn2)
 root_node.children.append(cn3)
 
-mcts = MCTS(root_node, 1)
+mcts = MCTS(root_node, 2)
 mcts.traverse()
 
 
