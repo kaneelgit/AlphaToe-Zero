@@ -68,11 +68,11 @@ class MCTS:
             rand_move = self.choose_rand_move(state) #create a new move
             self.change_player() #change player before move
             state[rand_move] = self.player #move            
-            
+            print(state)
             #find if terminal
             self._terminal_ = self.is_terminal(state)
 
-            #if terminal            
+            #if terminal state (game has ended)         
             if (self._terminal_ == 1) or (self._terminal_ == 2) or (self._terminal_ == 0):
                 self.print_board(state) #print board before breaking
                 break
@@ -82,21 +82,63 @@ class MCTS:
         this function backpropagate and update the values
         """
         #final state
-        _state_  = copy.deepcopy(self.child_node)
-        print('root node')
-        print(self.child_node.state)
-        while _state_ != self.root_node:
+        _node_ = self.child_node
+
+        while _node_.state != self.root_node.state:
             
             #if the player won
-            if self._terminal_ == self._player_: #if winner is the current player
-                _state_.N += 1
-                _state_.Q += 1
-            else:
-                _state_.N += 1
 
+            if self._terminal_ == self._player_: #if winner is the current player
+                _node_.N += 1
+                _node_.Q += 1
+                
+            else:
+                _node_.N += 1
+                
             #change the state to parent
-            _state_ = _state_.parent
+            _node_ = _node_.parent
     
+            
+    def traverse(self):
+        """
+        This function traverse until a leaf node is met
+        """
+        if self.is_terminal(self.current_node.state) == 1: #if current node is terminal 
+            #print('terminal') #not correct yet
+            pass
+            
+
+        elif not self.current_node.children: #if current node has no children means leaf node
+            #print('met leaf node')
+
+            #expand
+            self.expand()
+
+            #simulate
+            self.simulate()
+
+            #backpropagate
+            self.backprop()          
+            
+        else: #if current node has children continue to traverse
+            
+            #print('looking for children')
+            self.current_node = self.max_uct(self.current_node.children)        
+            self.change_player() #change player after selecting a child node
+            
+            return self.traverse()
+    
+    def rollout(self, n_rollouts):
+        """
+        performs the rollout given the input number of rollouts (n_rollouts)
+        """
+        for n in range(n_rollouts):
+            #traverse n times
+            print(f'rollout {n}')
+            self.traverse()
+            
+
+
     def is_terminal(self, state):
         """
         check if state is a terminal state
@@ -113,36 +155,7 @@ class MCTS:
         if not np.any(np.array(state) == 0):
             
             return 0
-            
-    def traverse(self):
-        """
-        This function traverse until a leaf node is met
-        """
-        if self.is_terminal(self.current_node.state) == 1: #if current node is terminal 
-            print('terminal') #not correct yet
-            pass
-            
 
-        elif not self.current_node.children: #if current node has no children means leaf node
-            print('met leaf node')
-
-            #expand
-            self.expand()
-
-            #simulate
-            self.simulate()
-
-            #backpropagate
-            #self.backprop()     
-
-        else: #if current node has children continue to traverse
-            
-            print('looking for children')
-            self.current_node = self.max_uct(self.current_node.children)        
-            self.change_player() #change player after selecting a child node
-            
-            return self.traverse() 
-    
     def max_uct(self, children):
         """
         find the node with max uct value given node
@@ -204,7 +217,6 @@ class MCTS:
 #testing MCTS
 #example state
 state = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-# state = [1, 1, 1, 0, 0, 0, 0, 0, 0]
 root_node = Node(state) 
 
 #create two child states
@@ -212,25 +224,34 @@ child_state1 = [0, 0, 0, 0, 0, 0, 0, 0, 1]
 child_state2 = [0, 0, 0, 0, 0, 0, 0, 1, 0]
 child_state3 = [0, 1, 0, 0, 0, 0, 0, 0, 0]
 
+#create child nodes
 cn1 = Node(child_state1)
 cn2 = Node(child_state2)
 cn3 = Node(child_state3)
 
+#assign parent node for children
+cn1.parent = root_node
+cn2.parent = root_node
+cn3.parent = root_node
+
+#new child for cn3
 child_state4 = [0, 1, 2, 0, 0, 0, 0, 0, 0]
 cn4 = Node(child_state4)
-
 cn3.children.append(cn4)
+cn4.parent = cn3
 
+#append the nodes to root node
 root_node.children.append(cn1)
 root_node.children.append(cn2)
 root_node.children.append(cn3)
 
 mcts = MCTS(root_node, 2)
-mcts.traverse()
+#mcts.traverse()
+mcts.rollout(5)
 
-
+# print(cn1.N)
+# print(cn2.N)
+# print(cn3.N)
     
-    
-
-
+#player is not changin during rollout. 1/3/2022
 
