@@ -40,7 +40,7 @@ class MCTS:
         self.root_node = node
         self.current_node = node
         self.player = player
-        self._player_ = copy.deepcopy(player) #keep a copy of original player
+        self._player_ = player #keep a copy of original player
 
     def expand(self):
         """
@@ -50,8 +50,7 @@ class MCTS:
         new_state = copy.deepcopy(self.current_node.state) #create the new state
         self.change_player() #change player before the move
         new_state[rand_move] = self.player #create new state
-        
-                
+                        
         #create the child node and append it to the parent
         self.child_node = Node(new_state)
         self.child_node.parent = self.current_node #set child nodes parent to current node
@@ -63,18 +62,19 @@ class MCTS:
         """
         #get the new child node and expand it
         state = copy.deepcopy(self.child_node.state)
-        
+
         while True:
+            
             rand_move = self.choose_rand_move(state) #create a new move
             self.change_player() #change player before move
             state[rand_move] = self.player #move            
-            print(state)
+            
             #find if terminal
             self._terminal_ = self.is_terminal(state)
 
             #if terminal state (game has ended)         
             if (self._terminal_ == 1) or (self._terminal_ == 2) or (self._terminal_ == 0):
-                self.print_board(state) #print board before breaking
+                # self.print_board(state) #print board before breaking
                 break
     
     def backprop(self):
@@ -136,9 +136,9 @@ class MCTS:
             #traverse n times
             print(f'rollout {n}')
             self.traverse()
+            self.player = self._player_ #change player back to the original player
+            self.current_node = self.root_node #make the current node back to the original node to rollout
             
-
-
     def is_terminal(self, state):
         """
         check if state is a terminal state
@@ -219,39 +219,40 @@ class MCTS:
 state = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 root_node = Node(state) 
 
-#create two child states
-child_state1 = [0, 0, 0, 0, 0, 0, 0, 0, 1]
-child_state2 = [0, 0, 0, 0, 0, 0, 0, 1, 0]
-child_state3 = [0, 1, 0, 0, 0, 0, 0, 0, 0]
+# #create two child states
+# child_state1 = [0, 0, 0, 0, 0, 0, 0, 0, 1]
+# child_state2 = [0, 0, 0, 0, 0, 0, 0, 1, 0]
+# child_state3 = [0, 1, 0, 0, 0, 0, 0, 0, 0]
 
-#create child nodes
-cn1 = Node(child_state1)
-cn2 = Node(child_state2)
-cn3 = Node(child_state3)
+# #create child nodes
+# cn1 = Node(child_state1)
+# cn2 = Node(child_state2)
+# cn3 = Node(child_state3)
 
-#assign parent node for children
-cn1.parent = root_node
-cn2.parent = root_node
-cn3.parent = root_node
+# #assign parent node for children
+# cn1.parent = root_node
+# cn2.parent = root_node
+# cn3.parent = root_node
 
-#new child for cn3
-child_state4 = [0, 1, 2, 0, 0, 0, 0, 0, 0]
-cn4 = Node(child_state4)
-cn3.children.append(cn4)
-cn4.parent = cn3
+# #new child for cn3
+# child_state4 = [0, 1, 2, 0, 0, 0, 0, 0, 0]
+# cn4 = Node(child_state4)
+# cn3.children.append(cn4)
+# cn4.parent = cn3
 
-#append the nodes to root node
-root_node.children.append(cn1)
-root_node.children.append(cn2)
-root_node.children.append(cn3)
+# #append the nodes to root node
+# root_node.children.append(cn1)
+# root_node.children.append(cn2)
+# root_node.children.append(cn3)
 
 mcts = MCTS(root_node, 2)
 #mcts.traverse()
 mcts.rollout(5)
 
-# print(cn1.N)
-# print(cn2.N)
-# print(cn3.N)
+# # print(cn1.N)
+# # print(cn2.N)
+# # print(cn3.N)
     
-#player is not changin during rollout. 1/3/2022
+#rollout is working properly. NOw have to fix the uct value and give probabilities etc. 1/4/2022
+
 
