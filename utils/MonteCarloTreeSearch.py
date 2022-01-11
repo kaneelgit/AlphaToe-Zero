@@ -173,7 +173,7 @@ class MCTS:
 
     def uct(self, node):
         """
-        calculate the uct value fot this node
+        calculate the uct value for this node
         """
         return None
 
