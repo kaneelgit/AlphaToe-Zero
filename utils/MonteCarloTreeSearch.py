@@ -40,6 +40,7 @@ class MCTS:
         self.current_node = node
         self.player = player
         self._player_ = player #keep a copy of original player
+        self.exploration_weight = 1
 
     def expand(self):
         """
@@ -48,7 +49,6 @@ class MCTS:
         if (self.is_terminal(self.current_node.state) == 1) or (self.is_terminal(self.current_node.state) == 0) or \
             (self.is_terminal(self.current_node.state) == 2): #if current node is terminal 
             #print('terminal') #not correct yet
-            print('terminal')
             return
             
         rand_move = self.choose_rand_move(self.current_node.state) #select random move
@@ -125,25 +125,26 @@ class MCTS:
             #create a random exploration here
             exploration = np.random.choice([1,0], p = [0.2, 0.8])
             if exploration == 1:
-                #select a new move and see if its already a child node of parent
-                while True:
-                    rand_move = self.choose_rand_move(self.current_node.state)
-                    new_state = copy.deepcopy(self.current_node.state) #create the new state
-                    self.change_player() #change player before the move
-                    new_state[rand_move] = self.player #create new state
-                    child_states = [x.state for x in self.current_node.children]
+                #select a new move and see if its already a child node of parent                
+                rand_move = self.choose_rand_move(self.current_node.state)
+                new_state = copy.deepcopy(self.current_node.state) #create the new state
+                self.change_player() #change player before the move
+                new_state[rand_move] = self.player #create new state
+                child_states = [x.state for x in self.current_node.children]
+                                                    
+                if new_state in child_states: #if its a completely new state
+                    #create the child node and append it to the parent
+                    self.change_player() #do nothing change player back 
+                    return self.traverse() #traverse again
+
+                else:                                      
+                    self.child_node = Node(new_state)
+                    self.child_node.parent = self.current_node #set child nodes parent to current node
+                    self.current_node.children.append(self.child_node) #append child node to current_nodes children
                     
-                    if new_state not in child_states: #if its a completely new state
-                        #create the child node and append it to the parent
-                        self.child_node = Node(new_state)
-                        self.child_node.parent = self.current_node #set child nodes parent to current node
-                        self.current_node.children.append(self.child_node) #append child node to current_nodes children
-                        
-                        #simulate and back prop
-                        self.simulate()
-                        self.backprop()
-                        
-                        break
+                    #simulate and back prop
+                    self.simulate()
+                    self.backprop()
             
             else:
                 self.current_node = self.max_uct(self.current_node.children)        
@@ -156,7 +157,6 @@ class MCTS:
         """
         for n in range(n_rollouts):
             #traverse n times
-            print(f'rollout {n}')
             self.player = self._player_ #change player back to the original player
             self.current_node = self.root_node #make the current node back to the original node to rollout
             self.traverse()
@@ -187,18 +187,25 @@ class MCTS:
         max_uct_node = None
 
         for child in children:
-
-            pass
+            uct_val = self.uct(child)
+            # print(uct_val)
+            if uct_val > max_uct_val:
+                max_uct_node = child
+                max_uct_val = uct_val
 
         #for now just use random child
-        return np.random.choice(children)
+        # return np.random.choice(children)
+        return max_uct_node
 
     def uct(self, node):
         """
         calculate the uct value for this node
         """
-        uct = node.Q/node.N + self.exploration_weight * math.sqrt
-        return None
+        epsilon = 10e-2
+        uct = node.Q/node.N + self.exploration_weight * math.sqrt(math.log(node.parent.N + epsilon)/node.N) #fix this here
+        # uct = node.Q/node.N + self.exploration_weight * math.log(node.N)
+        print(node.parent.N)
+        return uct
 
 
     def change_player(self):
@@ -245,15 +252,18 @@ root_node = Node(state)
 
 mcts = MCTS(root_node, 2)
 #mcts.traverse()
-mcts.rollout(50)
-
-
-for x in root_node.children:
-    print(x.state)
+mcts.rollout(10)
 
 # # print(cn1.N)
 # # print(cn2.N)
 # # print(cn3.N)
+node = root_node
+while True:
+    if node.children == []:
+        break
+    child = node.children[0]
+    #print(child.Q)
+    node = child
     
 #rollout is working properly. NOw have to fix the uct value and give probabilities etc. 1/4/2022
 
