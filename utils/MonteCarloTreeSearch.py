@@ -95,10 +95,10 @@ class MCTS:
 
             if self._terminal_ == self._player_: #if winner is the current player
                 _node_.N += 1
-                _node_.Q += 1
-                
+                                
             else:
                 _node_.N += 1
+                _node_.Q += 1
                 
             #change the state to parent
             _node_ = _node_.parent
@@ -123,7 +123,7 @@ class MCTS:
         else: #if current node has children continue to traverse
             
             #create a random exploration here
-            exploration = np.random.choice([1,0], p = [0.2, 0.8])
+            exploration = np.random.choice([1,0], p = [0.1, 0.9])
             if exploration == 1:
                 #select a new move and see if its already a child node of parent                
                 rand_move = self.choose_rand_move(self.current_node.state)
@@ -193,8 +193,6 @@ class MCTS:
                 max_uct_node = child
                 max_uct_val = uct_val
 
-        #for now just use random child
-        # return np.random.choice(children)
         return max_uct_node
 
     def uct(self, node):
@@ -202,9 +200,8 @@ class MCTS:
         calculate the uct value for this node
         """
         epsilon = 10e-2
-        uct = node.Q/node.N + self.exploration_weight * math.sqrt(math.log(node.parent.N + epsilon)/node.N) #fix this here
-        # uct = node.Q/node.N + self.exploration_weight * math.log(node.N)
-        print(node.parent.N)
+        uct = node.Q/node.N + self.exploration_weight * math.sqrt(abs(math.log(node.parent.N + epsilon))/node.N) 
+        
         return uct
 
 
@@ -246,24 +243,28 @@ class MCTS:
 
 #testing MCTS
 #example state
-state = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+state = [1, 1, 0, 2, 2, 0, 0, 0, 0]
 root_node = Node(state) 
 
 
 mcts = MCTS(root_node, 2)
 #mcts.traverse()
-mcts.rollout(10)
+mcts.rollout(100)
 
-# # print(cn1.N)
-# # print(cn2.N)
-# # print(cn3.N)
-node = root_node
-while True:
-    if node.children == []:
-        break
-    child = node.children[0]
-    #print(child.Q)
-    node = child
+# node = root_node
+# while True:
+#     if node.children == []:
+#         mcts.print_board(child.state)
+#         break
+#     child = node.children[0]
+#     #print(child.Q)
+#     node = child
+    
+for child in root_node.children:
+    
+    mcts.print_board(child.state)
+    print(child.N)
+    print('*'*10)
     
 #rollout is working properly. NOw have to fix the uct value and give probabilities etc. 1/4/2022
 
